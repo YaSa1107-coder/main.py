@@ -1,44 +1,45 @@
 import os
 import logging
-from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler
 
-# إعداد السجلات (Logs) لمعرفة ما إذا كان البوت يعمل أو يواجه أخطاء
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-
-# جلب التوكن من إعدادات Render (Environment Variables)
+# إعداد السجلات
+logging.basicConfig(level=logging.INFO)
 TOKEN = os.getenv('BOT_TOKEN')
 
-# الدالة التي تعمل عند كتابة أمر /start
+# دالة الترحيب مع أزرار الربح
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_name = update.effective_user.first_name
-    welcome_msg = (
-        f"أهلاً بك يا {user_name} في بوتك الأول! 🚀\n\n"
-        "أنا أعمل الآن من خلال سيرفرات Render.\n"
-        "يمكنك الآن البدء بتطويري لإضافة ميزات الربح."
+    keyboard = [
+        [InlineKeyboardButton("💰 أفضل عروض اليوم", callback_data='deals')],
+        [InlineKeyboardButton("📢 قناة العروض الخاصة", url='https://t.me/your_channel')], # ضع رابط قناتك هنا
+        [InlineKeyboardButton("🎁 اربح مكافأة يومية", callback_data='reward')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await update.message.reply_text(
+        "🚀 أهلاً بك في بوت الربح الذكي!\n\n"
+        "اختر من القائمة بالأسفل لبدء توفير المال أو كسب الجوائز:",
+        reply_markup=reply_markup
     )
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=welcome_msg)
 
-# الدالة التي تعمل عند كتابة أمر /help
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="هذا البوت قيد التطوير لتحقيق الربح!")
+# دالة التعامل مع ضغطات الأزرار
+async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == 'deals':
+        # هنا تضع روابط الآفيليت الخاصة بك (أمازون، نون، إلخ)
+        text = "🔥 عروض حصرية لك:\n1- آيفون 15 بخصم 20% [رابطك هنا]\n2- سماعات سوني [رابطك هنا]"
+        await query.edit_message_text(text=text)
+    
+    elif query.data == 'reward':
+        await query.edit_message_text(text="للحصول على مكافأتك، قم بزيارة الرابط التالي: [ضع رابط مختصر هنا]")
 
 if __name__ == '__main__':
-    # بناء البوت باستخدام التوكن
-    if not TOKEN:
-        print("خطأ: لم يتم العثور على BOT_TOKEN في إعدادات البيئة!")
-    else:
-        application = ApplicationBuilder().token(TOKEN).build()
-        
-        # إضافة الأوامر للبوت
-        start_handler = CommandHandler('start', start)
-        help_handler = CommandHandler('help', help_command)
-        
-        application.add_handler(start_handler)
-        application.add_handler(help_handler)
-        
-        print("البوت انطلق بنجاح...")
-        application.run_polling()
+    application = ApplicationBuilder().token(TOKEN).build()
+    
+    application.add_handler(CommandHandler('start', start))
+    application.add_handler(CallbackQueryHandler(button_click))
+    
+    print("البوت المطور انطلق بنجاح...")
+    application.run_polling()
