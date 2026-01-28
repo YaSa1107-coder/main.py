@@ -3,43 +3,67 @@ import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler
 
-# إعداد السجلات
+# إعداد السجلات لمراقبة أداء البوت
 logging.basicConfig(level=logging.INFO)
 TOKEN = os.getenv('BOT_TOKEN')
 
-# دالة الترحيب مع أزرار الربح
+# القائمة الرئيسية (الترحيب)
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_name = update.effective_user.first_name
+    
+    # تصميم الأزرار الاحترافية
     keyboard = [
-        [InlineKeyboardButton("💰 أفضل عروض اليوم", callback_data='deals')],
-        [InlineKeyboardButton("📢 قناة العروض الخاصة", url='https://t.me/your_channel')], # ضع رابط قناتك هنا
-        [InlineKeyboardButton("🎁 اربح مكافأة يومية", callback_data='reward')]
+        [InlineKeyboardButton("🛒 عروض AliExpress", callback_query_data='ali')],
+        [InlineKeyboardButton("⚡ صفقات Temu", callback_query_data='temu')],
+        [InlineKeyboardButton("📦 بالجملة من Alibaba", callback_query_data='alibaba')],
+        [InlineKeyboardButton("📢 قناة التخفيضات", url='https://t.me/YourChannel')] # ضع رابط قناتك هنا
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(
-        "🚀 أهلاً بك في بوت الربح الذكي!\n\n"
-        "اختر من القائمة بالأسفل لبدء توفير المال أو كسب الجوائز:",
-        reply_markup=reply_markup
+    welcome_text = (
+        f"أهلاً بك يا {user_name} في عالم التوفير! 👋\n\n"
+        "أنا مساعدك الذكي لجلب أقوى الخصومات من أكبر المتاجر العالمية.\n"
+        "يرجى اختيار المتجر الذي تود تصفح عروضه اليوم: 👇"
     )
+    
+    await update.message.reply_text(text=welcome_text, reply_markup=reply_markup)
 
-# دالة التعامل مع ضغطات الأزرار
-async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# التعامل مع ضغطات الأزرار
+async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    if query.data == 'deals':
-        # هنا تضع روابط الآفيليت الخاصة بك (أمازون، نون، إلخ)
-        text = "🔥 عروض حصرية لك:\n1- آيفون 15 بخصم 20% [رابطك هنا]\n2- سماعات سوني [رابطك هنا]"
-        await query.edit_message_text(text=text)
-    
-    elif query.data == 'reward':
-        await query.edit_message_text(text="للحصول على مكافأتك، قم بزيارة الرابط التالي: [ضع رابط مختصر هنا]")
+    if query.data == 'ali':
+        text = (
+            "🔥 **أقوى عروض AliExpress اليوم:**\n\n"
+            "1- قسم الـ 0.99$ [ضع رابطك هنا]\n"
+            "2- كوبونات خصم تصل لـ 12$ [ضع رابطك هنا]\n\n"
+            "⚠️ الروابط تتحدث يومياً!"
+        )
+        await query.edit_message_text(text=text, parse_mode='Markdown')
+
+    elif query.data == 'temu':
+        text = (
+            "⚡ **صفقات Temu المجنونة:**\n\n"
+            "🎁 هدايا للمستخدمين الجدد: [ضع رابطك هنا]\n"
+            "📉 تخفيضات الفلاش 90%: [ضع رابطك هنا]\n\n"
+            "استخدم الروابط أعلاه لتفعيل الخصم."
+        )
+        await query.edit_message_text(text=text, parse_mode='Markdown')
+
+    elif query.data == 'alibaba':
+        text = (
+            "📦 **فرص Alibaba للجملة والدروبشيبينغ:**\n\n"
+            "🌟 المنتجات الأكثر طلباً في 2026: [ضع رابطك هنا]\n"
+            "🚛 موردين موثوقين (شحن سريع): [ضع رابطك هنا]"
+        )
+        await query.edit_message_text(text=text, parse_mode='Markdown')
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TOKEN).build()
     
     application.add_handler(CommandHandler('start', start))
-    application.add_handler(CallbackQueryHandler(button_click))
+    application.add_handler(CallbackQueryHandler(handle_buttons))
     
-    print("البوت المطور انطلق بنجاح...")
+    print("البوت الاحترافي يعمل الآن بنجاح...")
     application.run_polling()
